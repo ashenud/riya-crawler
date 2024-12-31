@@ -5,7 +5,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # Constants
-BASE_URL = "https://riyasewana.com/search/cars/0-2010/price-3000000-4000000"
+BASE_URL = "https://riyasewana.com/search/cars/2010-0/automatic/price-0-5000000"
 SERVICE_ACCOUNT_FILE = "google_service_account.json"
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwiaj3HWPk1WX43unCrrKXMuvRhCntYW_70Sco5lzbkRwtzdYi4pZfEFXcWasxS-nYG/exec"
