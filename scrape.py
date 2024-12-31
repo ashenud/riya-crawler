@@ -1,10 +1,21 @@
 import requests
 from bs4 import BeautifulSoup
-import csv
 import time
+import gspread
+from google.oauth2.service_account import Credentials
 
 # Define the base URL
 BASE_URL = "https://riyasewana.com/search"
+
+# Google Sheets setup
+SERVICE_ACCOUNT_FILE = "service_account.json"  # Replace with your service account file
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+
+credentials = Credentials.from_service_account_file('credentials.json', scopes=SCOPES)
+gc = gspread.authorize(credentials)
+
+SPREADSHEET_NAME = "Car Listings"  # Replace with your Google Sheet name
+WORKSHEET_NAME = "Cars"  # Replace with your worksheet name
 
 # Function to extract data from a single page
 def extract_data(page):
@@ -44,12 +55,25 @@ def extract_data(page):
 
     return car_data
 
-# Function to write data to a CSV file
-def write_to_csv(data, filename="car_listings.csv"):
-    with open(filename, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=['Name', 'Place', 'Price', 'Mileage', 'Date Added'])
-        writer.writeheader()
-        writer.writerows(data)
+# Function to save data to Google Sheets
+def save_to_google_sheets(data):
+    try:
+        spreadsheet = gc.open(SPREADSHEET_NAME)
+        worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
+    except gspread.exceptions.SpreadsheetNotFound:
+        print(f"Spreadsheet '{SPREADSHEET_NAME}' not found.")
+        return
+
+    # Clear existing data in the worksheet
+    worksheet.clear()
+
+    # Add headers and data
+    headers = ['Name', 'Place', 'Price', 'Mileage', 'Date Added']
+    worksheet.append_row(headers)
+    for row in data:
+        worksheet.append_row([row['Name'], row['Place'], row['Price'], row['Mileage'], row['Date Added']])
+
+    print(f"Data saved to Google Sheet '{SPREADSHEET_NAME}' in worksheet '{WORKSHEET_NAME}'.")
 
 # Main function to scrape multiple pages
 def main():
@@ -65,8 +89,8 @@ def main():
         time.sleep(1)  # Add delay to prevent overwhelming the server
 
     if all_car_data:
-        write_to_csv(all_car_data)
-        print(f"Scraped data saved to car_listings.csv")
+        save_to_google_sheets(all_car_data)
+        print(f"Scraped data saved to Google Sheets.")
     else:
         print("No data scraped.")
 
