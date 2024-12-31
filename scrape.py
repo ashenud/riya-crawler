@@ -4,30 +4,28 @@ import time
 import gspread
 from google.oauth2.service_account import Credentials
 
-# Define the base URL
+# Constants
 BASE_URL = "https://riyasewana.com/search"
+SERVICE_ACCOUNT_FILE = "google_service_account.json"
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwiaj3HWPk1WX43unCrrKXMuvRhCntYW_70Sco5lzbkRwtzdYi4pZfEFXcWasxS-nYG/exec"
+SPREADSHEET_NAME = "Car Listings"
+WORKSHEET_NAME = "Cars"
 
 # Google Sheets setup
-SERVICE_ACCOUNT_FILE = "credentials.json"  # Replace with your service account file
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-
-# Replace with your Google Apps Script Web App URL
-WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwiaj3HWPk1WX43unCrrKXMuvRhCntYW_70Sco5lzbkRwtzdYi4pZfEFXcWasxS-nYG/exec"
-
 credentials = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 gc = gspread.authorize(credentials)
 
-SPREADSHEET_NAME = "Car Listings"  # Replace with your Google Sheet name
-WORKSHEET_NAME = "Cars"  # Replace with your worksheet name
+# User-Agent header for web scraping
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+}
 
 # Function to extract data from a single page
-def extract_data(page):
+def extract_data(page: int) -> list:
     url = f"{BASE_URL}?page={page}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-    }
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=HEADERS, timeout=10)
         response.raise_for_status()  # Raise an error for bad HTTP responses
     except requests.exceptions.RequestException as e:
         print(f"Error fetching page {page}: {e}")
@@ -63,7 +61,7 @@ def extract_data(page):
     return car_data
 
 # Function to save data to Google Sheets
-def save_to_google_sheets(data):
+def save_to_google_sheets(data: list):
     try:
         spreadsheet = gc.open(SPREADSHEET_NAME)
         worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
@@ -78,11 +76,11 @@ def save_to_google_sheets(data):
 
     # Prepare rows in a batch format (list of lists)
     rows = [[row['Name'], row['Link'], row['Image URL'], row['Place'], row['Price'], row['Mileage'], row['Date Added']] for row in data]
-
     worksheet.append_rows(rows)  # Batch append rows
 
     print(f"Data saved to Google Sheet '{SPREADSHEET_NAME}' in worksheet '{WORKSHEET_NAME}'.")
 
+# Function to trigger the Google Apps Script Web App for loading image URLs
 def call_load_image_from_url_web_app():
     try:
         response = requests.get(WEB_APP_URL)
