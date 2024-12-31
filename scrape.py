@@ -8,10 +8,10 @@ from google.oauth2.service_account import Credentials
 BASE_URL = "https://riyasewana.com/search"
 
 # Google Sheets setup
-SERVICE_ACCOUNT_FILE = "service_account.json"  # Replace with your service account file
+SERVICE_ACCOUNT_FILE = "credentials.json"  # Replace with your service account file
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
-credentials = Credentials.from_service_account_file('credentials.json', scopes=SCOPES)
+credentials = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 gc = gspread.authorize(credentials)
 
 SPREADSHEET_NAME = "Car Listings"  # Replace with your Google Sheet name
@@ -64,14 +64,14 @@ def save_to_google_sheets(data):
         print(f"Spreadsheet '{SPREADSHEET_NAME}' not found.")
         return
 
-    # Clear existing data in the worksheet
-    worksheet.clear()
-
-    # Add headers and data
+    # Add headers and batch data in one go
     headers = ['Name', 'Place', 'Price', 'Mileage', 'Date Added']
+    worksheet.clear()  # Optionally clear existing data before adding new data
     worksheet.append_row(headers)
-    for row in data:
-        worksheet.append_row([row['Name'], row['Place'], row['Price'], row['Mileage'], row['Date Added']])
+
+    # Prepare rows in a batch format (list of lists)
+    rows = [[row['Name'], row['Place'], row['Price'], row['Mileage'], row['Date Added']] for row in data]
+    worksheet.append_rows(rows)  # Batch append rows
 
     print(f"Data saved to Google Sheet '{SPREADSHEET_NAME}' in worksheet '{WORKSHEET_NAME}'.")
 
