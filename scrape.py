@@ -5,7 +5,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # Constants
-BASE_URL = "https://riyasewana.com/search"
+BASE_URL = "https://riyasewana.com/search/cars/0-2010/price-3000000-4000000"
 SERVICE_ACCOUNT_FILE = "google_service_account.json"
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwiaj3HWPk1WX43unCrrKXMuvRhCntYW_70Sco5lzbkRwtzdYi4pZfEFXcWasxS-nYG/exec"
@@ -33,6 +33,9 @@ def extract_data(page: int) -> list:
 
     soup = BeautifulSoup(response.text, 'html.parser')
     car_listings = soup.find_all('li', class_='item')
+
+    # Skip the first 4 listings
+    car_listings = car_listings[4:]
 
     car_data = []
     for listing in car_listings:
