@@ -11,6 +11,9 @@ BASE_URL = "https://riyasewana.com/search"
 SERVICE_ACCOUNT_FILE = "credentials.json"  # Replace with your service account file
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
+# Replace with your Google Apps Script Web App URL
+WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwiaj3HWPk1WX43unCrrKXMuvRhCntYW_70Sco5lzbkRwtzdYi4pZfEFXcWasxS-nYG/exec"
+
 credentials = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 gc = gspread.authorize(credentials)
 
@@ -41,13 +44,13 @@ def extract_data(page):
             image_url = "https:" + listing.find('img')['src'].strip()  # Extract image URL and complete the URL
             place = listing.find('div', class_='boxintxt').text.strip()
             price = listing.find('div', class_='boxintxt b').text.strip()
-            mileage = listing.find('div', class_='boxintxt', text=lambda x: x and 'km' in x).text.strip()
+            mileage = listing.find('div', class_='boxintxt', string=lambda x: x and 'km' in x).text.strip()
             date_added = listing.find('div', class_='boxintxt s').text.strip()
 
             car_data.append({
                 'Name': name,
                 'Link': link,  # Add link to data
-                'Image URL': f"=IMAGE(\"{image_url}\")",
+                'Image URL': image_url,
                 'Place': place,
                 'Price': price,
                 'Mileage': mileage,
@@ -80,6 +83,14 @@ def save_to_google_sheets(data):
 
     print(f"Data saved to Google Sheet '{SPREADSHEET_NAME}' in worksheet '{WORKSHEET_NAME}'.")
 
+def call_load_image_from_url_web_app():
+    try:
+        response = requests.get(WEB_APP_URL)
+        response.raise_for_status()  # Check for successful response
+        print(f"Load image from URL executed: {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling Web App: {e}")
+
 # Main function to scrape multiple pages
 def main():
     all_car_data = []
@@ -95,6 +106,7 @@ def main():
 
     if all_car_data:
         save_to_google_sheets(all_car_data)
+        call_load_image_from_url_web_app()
         print(f"Scraped data saved to Google Sheets.")
     else:
         print("No data scraped.")
