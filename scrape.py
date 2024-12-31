@@ -37,6 +37,8 @@ def extract_data(page):
     for listing in car_listings:
         try:
             name = listing.find('a', title=True).get('title', '').strip()
+            link = listing.find('a', title=True).get('href', '').strip()  # Extract link
+            image_url = "https:" + listing.find('img')['src'].strip()  # Extract image URL and complete the URL
             place = listing.find('div', class_='boxintxt').text.strip()
             price = listing.find('div', class_='boxintxt b').text.strip()
             mileage = listing.find('div', class_='boxintxt', text=lambda x: x and 'km' in x).text.strip()
@@ -44,6 +46,8 @@ def extract_data(page):
 
             car_data.append({
                 'Name': name,
+                'Link': link,  # Add link to data
+                'Image URL': f"=IMAGE(\"{image_url}\")",
                 'Place': place,
                 'Price': price,
                 'Mileage': mileage,
@@ -65,12 +69,13 @@ def save_to_google_sheets(data):
         return
 
     # Add headers and batch data in one go
-    headers = ['Name', 'Place', 'Price', 'Mileage', 'Date Added']
+    headers = ['Name', 'Link', 'Image URL', 'Place', 'Price', 'Mileage', 'Date Added']
     worksheet.clear()  # Optionally clear existing data before adding new data
     worksheet.append_row(headers)
 
     # Prepare rows in a batch format (list of lists)
-    rows = [[row['Name'], row['Place'], row['Price'], row['Mileage'], row['Date Added']] for row in data]
+    rows = [[row['Name'], row['Link'], row['Image URL'], row['Place'], row['Price'], row['Mileage'], row['Date Added']] for row in data]
+
     worksheet.append_rows(rows)  # Batch append rows
 
     print(f"Data saved to Google Sheet '{SPREADSHEET_NAME}' in worksheet '{WORKSHEET_NAME}'.")
